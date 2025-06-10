@@ -45,43 +45,36 @@ const limiter = rateLimit({
 
 app.use(limiter);
 
-// CORS configuration
+// CORS configuration - simplified for serverless
 app.use(cors({
-  origin: function(origin, callback) {
-    if(!origin) return callback(null, true);
-
-    const allowedOrigins = [
-      process.env.FRONTEND_URL || 'http://localhost:8080',
-      'https://task-manager-frontend-app.netlify.app',
-      'https://task.greenhacker.tech',
-      'http://task.greenhacker.tech',
-      /https:\/\/[a-z0-9-]+--task-manager-frontend-app\.netlify\.app/
-    ];
-
-    const isAllowed = allowedOrigins.some(allowedOrigin => {
-      if (typeof allowedOrigin === 'string') {
-        return allowedOrigin === origin;
-      } else if (allowedOrigin instanceof RegExp) {
-        return allowedOrigin.test(origin);
-      }
-      return false;
-    });
-
-    if (isAllowed || process.env.NODE_ENV !== 'production') {
-      callback(null, true);
-    } else {
-      console.log('CORS blocked request from:', origin);
-      callback(new Error('Not allowed by CORS'));
-    }
-  },
+  origin: [
+    'https://task.greenhacker.tech',
+    'http://task.greenhacker.tech',
+    'https://task-manager-frontend-app.netlify.app',
+    /https:\/\/[a-z0-9-]+--task-manager-frontend-app\.netlify\.app/,
+    process.env.FRONTEND_URL || 'http://localhost:8080'
+  ],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
   exposedHeaders: ['Content-Length', 'X-Total-Count'],
   preflightContinue: false,
-  optionsSuccessStatus: 204,
-  maxAge: 86400
+  optionsSuccessStatus: 200
 }));
+
+// Additional CORS headers for serverless functions
+app.use((req, res, next) => {
+  res.header('Access-Control-Allow-Origin', 'https://task.greenhacker.tech');
+  res.header('Access-Control-Allow-Credentials', 'true');
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+
+  if (req.method === 'OPTIONS') {
+    res.status(200).end();
+    return;
+  }
+  next();
+});
 
 // Body parsing middleware
 app.use(express.json({ limit: '1mb' }));
@@ -121,7 +114,13 @@ const connectToDatabase = async () => {
 // Middleware to ensure database connection (only for routes that need it)
 const requireDatabase = async (req, res, next) => {
   try {
-    await connectToDatabase();
+    // Set a timeout for database connection to prevent function timeout
+    const connectionPromise = connectToDatabase();
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error('Database connection timeout')), 8000)
+    );
+
+    await Promise.race([connectionPromise, timeoutPromise]);
     next();
   } catch (error) {
     console.error('Database connection failed:', error.message);
@@ -132,11 +131,11 @@ const requireDatabase = async (req, res, next) => {
   }
 };
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/auth', googleAuthRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/tasks', taskRoutes);
+// Routes (apply database middleware only to routes that need it)
+app.use('/api/auth', requireDatabase, authRoutes);
+app.use('/api/auth', requireDatabase, googleAuthRoutes);
+app.use('/api/users', requireDatabase, userRoutes);
+app.use('/api/tasks', requireDatabase, taskRoutes);
 
 // API root route
 app.get('/api', (_req, res) => {
