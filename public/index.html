@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Manager API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            text-align: center;
+        }
+        .status {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            color: #2e7d32;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            border-left: 4px solid #007bff;
+            padding: 15px;
+            margin: 10px 0;
+        }
+        .endpoint h3 {
+            margin: 0 0 10px 0;
+            color: #007bff;
+        }
+        .endpoint p {
+            margin: 5px 0;
+            color: #666;
+        }
+        .method {
+            display: inline-block;
+            background: #007bff;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 3px;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .method.post { background: #28a745; }
+        .method.put { background: #ffc107; color: #333; }
+        .method.delete { background: #dc3545; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Task Manager API</h1>
+        
+        <div class="status">
+            ✅ API is running successfully!
+        </div>
+        
+        <h2>Available Endpoints</h2>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /health</h3>
+            <p>Health check endpoint to verify API status</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api</h3>
+            <p>API information and status</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">POST</span> /api/auth/register</h3>
+            <p>Register a new user account</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">POST</span> /api/auth/login</h3>
+            <p>Login with email and password</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">POST</span> /api/auth/google</h3>
+            <p>Login with Google OAuth</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/users/me</h3>
+            <p>Get current user profile (requires authentication)</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">GET</span> /api/tasks</h3>
+            <p>Get all tasks for the authenticated user</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">POST</span> /api/tasks</h3>
+            <p>Create a new task</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">PUT</span> /api/tasks/:id</h3>
+            <p>Update an existing task</p>
+        </div>
+        
+        <div class="endpoint">
+            <h3><span class="method">DELETE</span> /api/tasks/:id</h3>
+            <p>Delete a task</p>
+        </div>
+        
+        <h2>Quick Test</h2>
+        <p>You can test the API by visiting:</p>
+        <ul>
+            <li><a href="/health" target="_blank">/health</a> - Health check</li>
+            <li><a href="/api" target="_blank">/api</a> - API info</li>
+        </ul>
+        
+        <h2>Frontend</h2>
+        <p>The frontend application is deployed separately and can be found at:</p>
+        <p><a href="https://task.greenhacker.tech" target="_blank">https://task.greenhacker.tech</a></p>
+    </div>
+</body>
+</html>

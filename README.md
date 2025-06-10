@@ -44,8 +44,11 @@ Backend API for the Task Manager application.
 
 ## Deployment
 
-This API is deployed on Railway.
+This API is deployed on Netlify as serverless functions.
+
+- **API URL**: https://taskms.greenhacker.tech
+- **Frontend URL**: https://task.greenhacker.tech
 
 ## Frontend
 
-The frontend for this application is deployed separately on Netlify.
+The frontend for this application is deployed separately on Netlify at https://task.greenhacker.tech.
