@@ -19,18 +19,28 @@ dotenv.config();
 // Initialize express app
 const app = express();
 
+// Trust proxy for serverless functions
+app.set('trust proxy', true);
+
 // Security middleware
 app.use(helmet({
   contentSecurityPolicy: false, // Disable CSP for Netlify Functions
 }));
 
-// Rate limiting
+// Rate limiting (configured for serverless)
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  message: 'Too many requests from this IP, please try again after 15 minutes'
+  message: 'Too many requests from this IP, please try again after 15 minutes',
+  keyGenerator: (req) => {
+    // Use Netlify's client IP header or fallback
+    return req.headers['x-nf-client-connection-ip'] ||
+           req.headers['x-forwarded-for']?.split(',')[0]?.trim() ||
+           req.ip ||
+           'unknown';
+  }
 });
 
 app.use(limiter);
@@ -84,37 +94,43 @@ app.use(morgan('combined'));
 let cachedDb = null;
 
 const connectToDatabase = async () => {
-  if (cachedDb) {
+  if (cachedDb && mongoose.connection.readyState === 1) {
     return cachedDb;
   }
 
   try {
+    console.log('Attempting MongoDB connection...');
+    console.log('MongoDB URI exists:', !!process.env.MONGODB_URI);
+
     const connection = await mongoose.connect(process.env.MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 10000,
       socketTimeoutMS: 45000,
-      bufferCommands: false,
-      bufferMaxEntries: 0,
+      maxPoolSize: 1, // Limit connection pool for serverless
     });
-    
+
     cachedDb = connection;
     console.log('MongoDB connected successfully');
     return connection;
   } catch (error) {
-    console.error('MongoDB connection error:', error);
+    console.error('MongoDB connection error:', error.message);
+    console.error('Full error:', error);
     throw error;
   }
 };
 
-// Middleware to ensure database connection
-app.use(async (req, res, next) => {
+// Middleware to ensure database connection (only for routes that need it)
+const requireDatabase = async (req, res, next) => {
   try {
     await connectToDatabase();
     next();
   } catch (error) {
-    console.error('Database connection failed:', error);
-    res.status(500).json({ message: 'Database connection failed' });
+    console.error('Database connection failed:', error.message);
+    res.status(500).json({
+      message: 'Database connection failed',
+      error: process.env.NODE_ENV === 'development' ? error.message : undefined
+    });
   }
-});
+};
 
 // Routes
 app.use('/api/auth', authRoutes);

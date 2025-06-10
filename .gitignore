@@ -49,3 +49,6 @@ Dockerfile.railway
 # Testing
 coverage/
 .nyc_output/
+
+# Local Netlify folder
+.netlify
